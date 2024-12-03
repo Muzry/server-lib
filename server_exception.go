@@ -41,6 +41,9 @@ const (
 
 	// UserVerifiedCodeErrorExceptionCode user is deactivated
 	UserVerifiedCodeErrorExceptionCode = 30002
+
+	// UserLockedExceptionCode user is locked when user login failed more than 5 times
+	UserLockedExceptionCode = 30003
 )
 
 func AuthException() *Exception {
@@ -124,5 +127,12 @@ func UserVerifiedCodeErrorException() *Exception {
 	return newException(
 		UserVerifiedCodeErrorExceptionCode,
 		"verified code is not correct",
+	)
+}
+
+func UserLockedException() *Exception {
+	return newException(
+		UserLockedExceptionCode,
+		"user is locked, please try again after 5 minutes",
 	)
 }
