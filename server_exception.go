@@ -130,9 +130,12 @@ func UserVerifiedCodeErrorException() *Exception {
 	)
 }
 
-func UserLockedException() *Exception {
+func UserLockedException(msg string) *Exception {
+	if msg == "" {
+		msg = "user is locked, please try again later"
+	}
 	return newException(
 		UserLockedExceptionCode,
-		"user is locked, please try again after 5 minutes",
+		msg,
 	)
 }
