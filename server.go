@@ -14,34 +14,40 @@ import (
 )
 
 type HTTPServer struct {
-	srv     *http.Server
-	engine  *gin.Engine
-	router  Router
-	version string
-	appName string
+	srv         *http.Server
+	engine      *gin.Engine
+	routers     []Router
+	version     string
+	appName     string
+	middlewares []gin.HandlerFunc
 }
 
-func NewHTTPServer(appName, version, addr string, router Router) HTTPServer {
+func NewHTTPServer(appName, version, addr string, routers []Router, middlewares []gin.HandlerFunc) HTTPServer {
 	engine := gin.Default()
 	engine.Use(ExceptionHandle())
 	engine.Use(ClientIPHandle())
 	s := HTTPServer{
-		engine:  engine,
-		version: version,
-		appName: appName,
-		router:  router,
+		engine:      engine,
+		version:     version,
+		appName:     appName,
+		routers:     routers,
+		middlewares: middlewares,
 	}
-	s.addRouters()
+	s.registerHealthRouter()
+	s.registerRouters()
 	s.srv = &http.Server{
 		Addr:    addr,
 		Handler: s.engine,
 	}
 	return s
 }
-
-func (s *HTTPServer) addRouters() {
-	s.addHealthRouter()
-	s.router.AddToRouter(s.engine)
+func (s *HTTPServer) registerRouters() {
+	for _, mw := range s.middlewares {
+		s.engine.Use(mw)
+	}
+	for _, router := range s.routers {
+		router.Register(s.engine)
+	}
 }
 
 func (s *HTTPServer) Run() {
@@ -54,7 +60,7 @@ func (s *HTTPServer) Run() {
 	s.gracefullyShutDown()
 }
 
-func (s *HTTPServer) addHealthRouter() {
+func (s *HTTPServer) registerHealthRouter() {
 	s.engine.GET("/health", func(c *gin.Context) {
 		c.JSON(
 			http.StatusOK,
